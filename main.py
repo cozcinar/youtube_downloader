@@ -1,27 +1,33 @@
 from pytubefix import YouTube
 from pytubefix.cli import on_progress
 
-# List of video URLs to download
 video_urls = [
-    'https://www.youtube.com/watch?v=x3pCAXQHpc0',
-    'https://www.youtube.com/watch?v=DwmfUFHu4m8',
-    'https://www.youtube.com/watch?v=p3X8AU6eFnM',
-    'https://www.youtube.com/watch?v=8JHVEXxFxOE',
-    'https://www.youtube.com/watch?v=XBo7tUJVVXU',
-    'https://www.youtube.com/watch?v=FR0TPPOjSRk',
-    'https://www.youtube.com/watch?v=xnYsv1diMH0',
-    'https://www.youtube.com/watch?v=mdqy9kmUeeI',
-    'https://www.youtube.com/watch?v=0PGlz9h8c_8',
-    'https://www.youtube.com/watch?v=Z1AIHCfuOT0'
+    ''
 ]
 
-# Desired resolution for the video download
-RESOLUTION = '1080p'
+# Initialize RESOLUTION to None
+RESOLUTION = None
+
+def on_progress(stream, chunk, bytes_remaining):
+    # Optional: Implement a progress callback if needed
+    pass
+
+def find_highest_resolution(yt):
+    resolutions = []
+    for stream in yt.streams.filter(type="video"):
+        if stream.resolution:
+            resolutions.append(stream.resolution)
+    return max(resolutions, key=lambda res: int(res[:-1]))
 
 def download_video(url):
+    global RESOLUTION
     try:
         # Create a YouTube object
         yt = YouTube(url, on_progress_callback=on_progress)
+
+        # Find the highest resolution available
+        RESOLUTION = find_highest_resolution(yt)
+        print(f"Highest resolution found: {RESOLUTION}")
 
         # Find the stream with the desired resolution
         video_stream = None
@@ -34,14 +40,15 @@ def download_video(url):
         if video_stream:
             print(f"Downloading: {yt.title} in {video_stream.resolution}")
             video_stream.download()
-            print("Download completed.\n")
+            print("Download completed successfully.")
         else:
-            print(f"No stream found for resolution {RESOLUTION} for video: {yt.title}\n")
+            print(f"No stream found with resolution {RESOLUTION}")
 
+    except URLError as e:
+        print(f"Network error occurred: {e}")
     except Exception as e:
-        print(f"An error occurred while downloading the video from {url}: {e}\n")
+        print(f"An error occurred while downloading the video from {url}: {e}")
 
-if __name__ == "__main__":
-    # Iterate over each URL in the list and download the video
-    for video_url in video_urls:
-        download_video(video_url)
+# Example usage
+for url in video_urls:
+    download_video(url)
